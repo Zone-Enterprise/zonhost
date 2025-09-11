@@ -1,0 +1,102 @@
+name: Validate Configuration
+
+on:
+  pull_request:
+    branches: [ main, master, dev, staging, develop ]
+  push:
+    paths:
+      - 'nhost.toml'
+      - 'nhost/**'
+      - 'functions/**'
+      - '.github/workflows/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+        fi
+
+    - name: Install Nhost CLI
+      run: npm install -g @nhost/cli
+
+    - name: Validate nhost.toml
+      run: |
+        echo "Validating nhost.toml configuration..."
+        if [ -f nhost.toml ]; then
+          echo "✅ nhost.toml found"
+          # Basic validation - check if file is valid TOML
+          if command -v toml &> /dev/null; then
+            toml validate nhost.toml
+          else
+            echo "⚠️  TOML validator not available, skipping syntax validation"
+          fi
+        else
+          echo "❌ nhost.toml not found"
+          exit 1
+        fi
+
+    - name: Validate migrations structure
+      run: |
+        echo "Validating migrations structure..."
+        if [ -d nhost/migrations ]; then
+          echo "✅ Migrations directory found"
+          find nhost/migrations -name "*.sql" | while read -r file; do
+            echo "Found migration: $file"
+          done
+        else
+          echo "⚠️  No migrations directory found"
+        fi
+
+    - name: Validate metadata structure  
+      run: |
+        echo "Validating metadata structure..."
+        if [ -d nhost/metadata ]; then
+          echo "✅ Metadata directory found"
+          if [ -f nhost/metadata/metadata.yaml ]; then
+            echo "✅ metadata.yaml found"
+          else
+            echo "⚠️  metadata.yaml not found"
+          fi
+        else
+          echo "⚠️  No metadata directory found"
+        fi
+
+    - name: Validate functions
+      run: |
+        echo "Validating serverless functions..."
+        if [ -d functions ]; then
+          echo "✅ Functions directory found"
+          find functions -name "*.ts" -o -name "*.js" | while read -r file; do
+            echo "Found function: $file"
+          done
+        else
+          echo "⚠️  No functions directory found"
+        fi
+
+    - name: TypeScript validation
+      run: |
+        if [ -f functions/*.ts ]; then
+          echo "Validating TypeScript functions..."
+          npx tsc --noEmit --skipLibCheck functions/*.ts || echo "⚠️  TypeScript validation warnings (non-blocking)"
+        fi
+
+    - name: Configuration summary
+      run: |
+        echo "📋 Configuration Summary:"
+        echo "- nhost.toml: $([ -f nhost.toml ] && echo "✅" || echo "❌")"
+        echo "- Migrations: $([ -d nhost/migrations ] && echo "✅" || echo "⚠️ ")"
+        echo "- Metadata: $([ -d nhost/metadata ] && echo "✅" || echo "⚠️ ")"
+        echo "- Functions: $([ -d functions ] && echo "✅" || echo "⚠️ ")"

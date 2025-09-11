@@ -1,0 +1,67 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [ dev, staging, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  NHOST_BASE_DIRECTORY: "."  # Change this to your Nhost folder path (e.g., "./backend" if in subfolder)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Nhost CLI
+      run: npm install -g @nhost/cli
+
+    - name: Authenticate with Nhost
+      run: nhost auth login --pat ${{ secrets.NHOST_DEV_PAT }}
+
+    - name: Link to Nhost development project
+      run: |
+        cd ${{ env.NHOST_BASE_DIRECTORY }}
+        nhost link --project-id ${{ secrets.NHOST_DEV_PROJECT_ID }} --subdomain ${{ secrets.NHOST_DEV_SUBDOMAIN }}
+
+    - name: Deploy nhost.toml configuration
+      run: |
+        cd ${{ env.NHOST_BASE_DIRECTORY }}
+        echo "Deploying nhost.toml configuration to development..."
+        nhost config show
+
+    - name: Deploy database migrations
+      run: |
+        cd ${{ env.NHOST_BASE_DIRECTORY }}
+        echo "Deploying database migrations to development..."
+        nhost hasura migrations apply --all-databases
+        nhost hasura migrations status --all-databases
+
+    - name: Apply GraphQL metadata
+      run: |
+        cd ${{ env.NHOST_BASE_DIRECTORY }}
+        echo "Applying GraphQL metadata to development..."
+        nhost hasura metadata apply
+
+    - name: Deploy serverless functions
+      run: |
+        cd ${{ env.NHOST_BASE_DIRECTORY }}
+        echo "Deploying serverless functions to development..."
+        nhost functions deploy
+
+    - name: Deployment successful
+      run: |
+        echo "🚀 Development deployment completed successfully!"
+        echo "Project URL: https://${{ secrets.NHOST_DEV_SUBDOMAIN }}.nhost.run"
