@@ -48,6 +48,9 @@ jspm_packages/
 logs
 *.log
 
+# Deployment failure logs
+deployment_log_failed.txt
+
 # Runtime
 dist/
 build/

@@ -10,6 +10,7 @@ A complete GitHub Actions CI/CD setup for Nhost projects with automatic deployme
 - **Serverless Functions**: Deploy TypeScript/JavaScript serverless functions
 - **Environment Management**: Separate production and development configurations
 - **Flexible Base Directory**: Support for Nhost projects in root or subfolders
+- **Deployment Failure Logging**: Automatic generation of detailed failure logs when deployments fail
 
 ## 📋 Setup Instructions
 
@@ -78,6 +79,47 @@ When you push to a configured branch, the CI/CD pipeline:
 6. **Applies** new database migrations
 7. **Deploys** GraphQL metadata
 8. **Deploys** serverless functions
+9. **Logs failures** if any step fails, creating detailed failure reports
+
+## 🔧 Deployment Failure Logging
+
+When a deployment fails, the system automatically:
+
+1. **Creates** a `deployment_log_failed.txt` file with detailed failure information
+2. **Captures** step-by-step execution results (success/failure/skipped)
+3. **Includes** troubleshooting guidance specific to the failure type
+4. **Uploads** the failure log as a workflow artifact for 30 days
+5. **Provides** direct links to the failed workflow run
+
+### Failure Log Contents
+
+The generated failure log includes:
+- Timestamp and environment details
+- Git branch, commit, and actor information
+- Specific step that failed (migrations, metadata, or functions)
+- Detailed troubleshooting steps
+- Links to relevant documentation
+- Workflow run URL for detailed error investigation
+
+### Accessing Failure Logs
+
+After a failed deployment:
+1. Go to the **Actions** tab in your GitHub repository
+2. Click on the failed workflow run
+3. Download the `deployment-failure-log-{environment}-{run-id}` artifact
+4. Extract and review the `deployment_log_failed.txt` file
+
+### Manual Deployment Failure Logging
+
+The `scripts/deploy.sh` script also includes failure logging for manual deployments:
+
+```bash
+# Run deployment script
+./scripts/deploy.sh production
+
+# If deployment fails, check the generated log
+cat deployment_log_failed.txt
+```
 
 ## 📝 Usage Examples
 
