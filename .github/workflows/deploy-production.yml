@@ -41,6 +41,7 @@ jobs:
         nhost config show
 
     - name: Deploy database migrations
+      id: migrations
       run: |
         cd ${{ env.NHOST_BASE_DIRECTORY }}
         echo "Deploying database migrations..."
@@ -48,12 +49,14 @@ jobs:
         nhost hasura migrations status --all-databases
 
     - name: Apply GraphQL metadata
+      id: metadata
       run: |
         cd ${{ env.NHOST_BASE_DIRECTORY }}
         echo "Applying GraphQL metadata..."
         nhost hasura metadata apply
 
     - name: Deploy serverless functions
+      id: functions
       run: |
         cd ${{ env.NHOST_BASE_DIRECTORY }}
         echo "Deploying serverless functions..."
@@ -63,3 +66,45 @@ jobs:
       run: |
         echo "🚀 Production deployment completed successfully!"
         echo "Project URL: https://${{ secrets.NHOST_SUBDOMAIN }}.nhost.run"
+
+    - name: Log deployment failure
+      if: failure()
+      run: |
+        echo "❌ Production deployment failed!"
+        echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" > deployment_log_failed.txt
+        echo "Environment: production" >> deployment_log_failed.txt
+        echo "Branch: ${{ github.ref_name }}" >> deployment_log_failed.txt
+        echo "Commit: ${{ github.sha }}" >> deployment_log_failed.txt
+        echo "Workflow: ${{ github.workflow }}" >> deployment_log_failed.txt
+        echo "Job: ${{ github.job }}" >> deployment_log_failed.txt
+        echo "Run ID: ${{ github.run_id }}" >> deployment_log_failed.txt
+        echo "Actor: ${{ github.actor }}" >> deployment_log_failed.txt
+        echo "Repository: ${{ github.repository }}" >> deployment_log_failed.txt
+        echo "Event: ${{ github.event_name }}" >> deployment_log_failed.txt
+        echo "" >> deployment_log_failed.txt
+        echo "Step Results:" >> deployment_log_failed.txt
+        echo "- Migrations: ${{ steps.migrations.outcome }}" >> deployment_log_failed.txt
+        echo "- Metadata: ${{ steps.metadata.outcome }}" >> deployment_log_failed.txt
+        echo "- Functions: ${{ steps.functions.outcome }}" >> deployment_log_failed.txt
+        echo "" >> deployment_log_failed.txt
+        echo "Failed Steps:" >> deployment_log_failed.txt
+        echo "Check the workflow logs for detailed error information." >> deployment_log_failed.txt
+        echo "" >> deployment_log_failed.txt
+        echo "Troubleshooting:" >> deployment_log_failed.txt
+        echo "1. Verify NHOST_PAT secret is valid and has proper permissions" >> deployment_log_failed.txt
+        echo "2. Check NHOST_PROJECT_ID and NHOST_SUBDOMAIN are correct" >> deployment_log_failed.txt
+        echo "3. Ensure nhost.toml configuration is valid" >> deployment_log_failed.txt
+        echo "4. Verify database migrations are syntactically correct" >> deployment_log_failed.txt
+        echo "5. Check GraphQL metadata for conflicts" >> deployment_log_failed.txt
+        echo "6. Review serverless function code for errors" >> deployment_log_failed.txt
+        echo "" >> deployment_log_failed.txt
+        echo "Workflow URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> deployment_log_failed.txt
+        cat deployment_log_failed.txt
+
+    - name: Upload failure log
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-failure-log-production-${{ github.run_id }}
+        path: deployment_log_failed.txt
+        retention-days: 30

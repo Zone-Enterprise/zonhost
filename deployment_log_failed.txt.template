@@ -1,0 +1,32 @@
+Timestamp: 2024-01-15 14:30:25 UTC
+Environment: production
+Branch: main
+Commit: abc123def456789
+Workflow: Deploy to Production
+Job: deploy
+Run ID: 1234567890
+Actor: github-user
+Repository: Zone-Enterprise/zonhost
+
+Failed Steps:
+Check the workflow logs for detailed error information.
+
+Troubleshooting:
+1. Verify NHOST_PAT secret is valid and has proper permissions
+2. Check NHOST_PROJECT_ID and NHOST_SUBDOMAIN are correct
+3. Ensure nhost.toml configuration is valid
+4. Verify database migrations are syntactically correct
+5. Check GraphQL metadata for conflicts
+6. Review serverless function code for errors
+
+Common Failure Scenarios:
+- Authentication failures: Invalid or expired PAT token
+- Migration errors: SQL syntax errors or constraint violations
+- Metadata conflicts: GraphQL schema inconsistencies
+- Function deployment: TypeScript compilation or runtime errors
+- Network issues: Timeout connecting to Nhost services
+
+Additional Resources:
+- Nhost Documentation: https://docs.nhost.io/
+- Hasura Documentation: https://hasura.io/docs/
+- GitHub Actions Logs: Check the workflow run for detailed error messages
