@@ -1,0 +1,75 @@
+[global]
+name = "zonhost-app"
+version = "1"
+
+[hasura]
+version = "v2.36.1-ce"
+admin_secret = "{{ HASURA_GRAPHQL_ADMIN_SECRET }}"
+webhook_secret = "{{ NHOST_WEBHOOK_SECRET }}"
+
+[hasura.jwtSecrets]
+type = "RS256"
+jwks_url = "{{ HASURA_GRAPHQL_JWT_SECRET }}"
+
+[hasura.settings]
+cors_domain = ["*"]
+dev_mode = true
+enabled_apis = ["metadata", "graphql", "pgdump", "config"]
+
+[hasura.logs]
+level = "warn"
+
+[hasura.events]
+http_pool_size = 100
+
+[postgres]
+version = "14.6-20221215-1"
+
+[auth]
+version = "0.24.1"
+
+[auth.elevated]
+mode = "required"
+
+[auth.user.roles]
+allowed = ["user", "admin"]
+default = "user"
+
+[auth.user.columns]
+allowed = ["id", "email", "display_name", "avatar_url"]
+
+[auth.session]
+access_token_expires_in = 900
+refresh_token_expires_in = 43200
+
+[auth.method.anonymous]
+enabled = false
+
+[auth.method.email_password]
+enabled = true
+password_min_length = 8
+
+[auth.method.email_passwordless]
+enabled = false
+
+[auth.method.sms_passwordless]
+enabled = false
+
+[auth.method.oauth.github]
+enabled = false
+client_id = "{{ AUTH_GITHUB_CLIENT_ID }}"
+client_secret = "{{ AUTH_GITHUB_CLIENT_SECRET }}"
+
+[auth.method.oauth.google]
+enabled = false
+client_id = "{{ AUTH_GOOGLE_CLIENT_ID }}"
+client_secret = "{{ AUTH_GOOGLE_CLIENT_SECRET }}"
+
+[storage]
+version = "0.6.0"
+
+[functions]
+version = "latest"
+
+[functions.node]
+version = 18
