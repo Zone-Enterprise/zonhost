@@ -1,0 +1,2 @@
+# zonhost
+zone nhost
